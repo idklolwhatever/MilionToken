@@ -25,10 +25,12 @@ while True:
             #print(soup.prettify())
 
             price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[12].text.split(' ')[0].split('$')[1])
+            #print(price)
             holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
+            #print(holders)
             market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
-
-            df = pd.DataFrame({'Date-Time': [time.ctime()],
+            #print(market_cap)
+            df_es = pd.DataFrame({'Date-Time': [time.ctime()],
                         'Date': [now.date()],
                         'Year': [now.year],
                         'Month': [now.month],
@@ -41,10 +43,10 @@ while True:
                         'Holders': [holders],
                         'Market Cap [$USD]': [market_cap]
                         })
-            print(df)
+            print(df_es)
 
             with open('data.csv', 'a') as f: # 'a' is for append mode
-                df.to_csv(f, header=False)
+                df_es.to_csv(f, header=False)
 
         if  urlopen(req_bsc).read():### Need to  have error pass here 
             html = urlopen(req_bsc).read() 
@@ -54,7 +56,7 @@ while True:
             holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
             market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
 
-            df = pd.DataFrame({'Date-Time': [time.ctime()],
+            df_bsc = pd.DataFrame({'Date-Time': [time.ctime()],
                         'Date': [now.date()],
                         'Year': [now.year],
                         'Month': [now.month],
@@ -67,14 +69,15 @@ while True:
                         'Holders': [holders],
                         'Market Cap [$USD]': [market_cap]
                         })
-            print(df)
+            print(df_bsc)
             with open('data_bsc.csv', 'a') as f: # 'a' is for append mode
-                df.to_csv(f, header=False)
-
-        
+                df_bsc.to_csv(f, header=False)
+        #pdb.set_trace()
+        total_holders = df_bsc['Holders'].values+df_es['Holders'].values
+        print(f'The current total number of holders is: {total_holders}')    
     except urllib.error.URLError as e:
         # Not an HTTP-specific error (e.g. connection refused)
         # ...
         print('URLError: {}'.format(e.reason))
 
-    time.sleep(60*1)# This will pause it every 5 minutes so as not to get kicked off server.
+    time.sleep(60*2)# This will pause it every 5 minutes so as not to get kicked off server.
