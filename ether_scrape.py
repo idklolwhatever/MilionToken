@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl import load_workbook
-import time
+import time, re
 
 headers = {'User-Agent': 'mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/27.0.1453.94 safari/537.36'}
 reg_url = "https://etherscan.io/token/0x6b4c7a5e3f0b99fcd83e9c089bddd6c7fce5c611"
@@ -26,7 +26,21 @@ while True:
 
             price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[12].text.split(' ')[0].split('$')[1])
             #print(price)
-            holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
+            #print('TEST1 '*10)
+            #print(soup.body.find('div', attrs={'class': 'mr-3'}).prettify()    )
+            #print('NEXT \n')
+            #print(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' '))
+            #print('\n')
+            #print(float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',','')))
+            ###############################################################################
+            # WARNING: There was a weird issue where occasionally when trying to find holders, the returned text
+            # would for some reason randomly not have  space, thus causing a crash and needing another way
+            # to ignore spliting by spaces and only look at numbers
+            ###########################################################################
+            x = soup.body.find('div', attrs={'class': 'mr-3'}).getText()
+            holders = float(re.findall(r'[0-9]+',x.replace(',',''))[0])
+            #holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
+            #pdb.set_trace()
             #print(holders)
             market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
             #print(market_cap)
@@ -53,7 +67,16 @@ while True:
             soup = BeautifulSoup(html,'html.parser')
 
             price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[12].text.split(' ')[0].split('$')[1])
-            holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
+            #print('TEST2 '*10)
+            #print(soup.body.find('div', attrs={'class': 'mr-3'}).prettify()    )
+            #print('NEXT2\n')
+            #print(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' '))
+            #print('\n')
+            #print(float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',','')))
+            x = soup.body.find('div', attrs={'class': 'mr-3'}).getText()
+            holders = float(re.findall(r'[0-9]+',x.replace(',',''))[0])
+
+            #holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
             market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
 
             df_bsc = pd.DataFrame({'Date-Time': [time.ctime()],
