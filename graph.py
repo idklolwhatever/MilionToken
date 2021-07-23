@@ -10,7 +10,7 @@ import seaborn as sns
 import pdb
 import matplotlib.ticker as ticker
 import time, sys, getopt
-
+from tqdm import tqdm
 
 print('Number of arguments:', len(sys.argv), 'arguments.')
 print('Argument List:', str(sys.argv))
@@ -240,8 +240,12 @@ while True:
     
     print('Waiting to Update Graph')
     #https://stackoverflow.com/questions/45729092/make-interactive-matplotlib-window-not-pop-to-front-on-each-update-windows-7
+
+    
     fig.canvas.draw_idle()
-    fig.canvas.start_event_loop(2*60)
+    fig.canvas.start_event_loop(.1)#Start an event loop. This is used to start a blocking event loop so that interactive functions, such as ginput and waitforbuttonpress, can wait for events. This should not be confused with the main GUI event loop, which is always running and has nothing to do with this.
+    for i in tqdm (range (2*60+1), desc="Waiting for new data", ascii=False, ncols=100):
+        time.sleep(1)
     ax1.clear()
     ax2.clear()
     plt.cla()
