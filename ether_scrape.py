@@ -7,6 +7,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl import load_workbook
 import time, re
+from tqdm import tqdm
 
 headers = {'User-Agent': 'mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/27.0.1453.94 safari/537.36'}
 reg_url = "https://etherscan.io/token/0x6b4c7a5e3f0b99fcd83e9c089bddd6c7fce5c611"
@@ -102,5 +103,7 @@ while True:
         # Not an HTTP-specific error (e.g. connection refused)
         # ...
         print('URLError: {}'.format(e.reason))
-
-    time.sleep(60*2)# This will pause it every 5 minutes so as not to get kicked off server.
+    
+    for i in tqdm (range (30*1), desc="Waiting for new data", ascii=False, ncols=100):
+        time.sleep(1)
+    #time.sleep(60*2)# This will pause it every 5 minutes so as not to get kicked off server.

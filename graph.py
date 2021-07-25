@@ -205,10 +205,8 @@ while True:
                  top=df_x_bound['Price Total'].max()*ylim_buffer_frac_top)    
     ax3.legend(loc='lower right')
     ax3.set_facecolor('white')
-    #Set date axis ticks for major and minor
-    #ax2.xaxis.set_minor_locator(mdates.AutoDateLocator())
-    #WARNING since the axes are shared, this formatting should only need to be applied once
 
+    #WARNING since the axes are shared, this formatting should only need to be applied once
     if time_delta.seconds < 1*60*60:
         print(f'The number of minutes are: {time_delta.seconds/60}')
         x_minor_lct = MinuteLocator(byminute = range(0,60+1,1))
@@ -229,23 +227,43 @@ while True:
         ax2.xaxis.set_major_locator(mdates.DayLocator())
         ax2.xaxis.set_major_formatter(mdates.DateFormatter("\n%D"))
 
-
-    sns.set()
-
+    
+    
+    ###############################################################################################
+    # AXIS 4: Holder Rates
+    ###############################################################################################
+    # #pdb.set_trace()
+    # date = pd.to_datetime('2021-07-16 09:44:36')
+    # df_x_bound['Date-Time'].sub(date).abs().idxmin()#Returns index of timestamp
+    # #The following will create a new column where 
+    # def holder_rate(row):
+    #     print(type(row))
+    #     #print(row['Holders Total'])
+    #     #pdb.set_trace()
+    #     return(row+1)
+    pdb.set_trace()
+    # df_x_bound['Holder Rate'] = df_x_bound.apply(lambda row: holder_rate(row['Date-Time'], row['Holders']))
+    # #df_x_bound['Holder Rate'] =  df_x_bound['Holders Total'].apply(lambda row: holder_rate(row))
+    # pdb.set_trace()
+    # df_x_bound['Holder Rate'] = df_x_bound['Holders Total'].apply(lambda x: (x - df_x_bound['Holders Total'].iloc[df_x_bound['Date-Time'].sub(date).abs().idxmin()])/((x['Date-Time']-date).seconds) )     ; df_x_bound
+    # ##df_x_bound['Holders'].apply(lambda x: df_x_bound['Date-Time'].sub(date).abs().idxmin())
+    
+    
+    
     fig.autofmt_xdate() # In this case, it just rotates the tick labels
     ax1.set_facecolor('white')
     plt.tight_layout()
-
     #plt.savefig(f'./graphs/MM_{time.ctime()}.png')
     
     print('Waiting to Update Graph')
-    #https://stackoverflow.com/questions/45729092/make-interactive-matplotlib-window-not-pop-to-front-on-each-update-windows-7
 
-    
-    fig.canvas.draw_idle()
-    fig.canvas.start_event_loop(.1)#Start an event loop. This is used to start a blocking event loop so that interactive functions, such as ginput and waitforbuttonpress, can wait for events. This should not be confused with the main GUI event loop, which is always running and has nothing to do with this.
-    for i in tqdm (range (2*60+1), desc="Waiting for new data", ascii=False, ncols=100):
-        time.sleep(1)
+    #https://stackoverflow.com/questions/45729092/make-interactive-matplotlib-window-not-pop-to-front-on-each-update-windows-7
+    fig.canvas.draw_idle()#draw only if idle; defaults to draw but backends can overrride
+    fig.canvas.start_event_loop(timeout=30)#Start an event loop. This is used to start a blocking event loop so that interactive functions, such as ginput and waitforbuttonpress, can wait for events. This should not be confused with the main GUI event loop, which is always running and has nothing to do with this.
+    # The loading bar below works but while its running, you cannot move the graph and that kinda sucks
+    # for i in tqdm (range (20), desc="Waiting for new data", ascii=False, ncols=100):
+    #     time.sleep(1)
+    fig.canvas.stop_event_loop()
     ax1.clear()
     ax2.clear()
     plt.cla()
