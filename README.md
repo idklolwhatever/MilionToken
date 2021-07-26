@@ -1,6 +1,6 @@
 # MilionToken
 
-![Newsroom](https://media.giphy.com/media/v2xIous7mnEYg/giphy.gif)
+![Newsroom](https://tenor.com/view/million-token-mm-techlead-moonshot-gif-22330560)
 
 All Things Million Token (MM)
 
