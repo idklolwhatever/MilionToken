@@ -1,6 +1,7 @@
 # MilionToken
 
 ![Newsroom](https://tenor.com/view/million-token-mm-techlead-moonshot-gif-22330560)
+![Citi-Bikes](img/vhFKhS7a.jpg)
 
 All Things Million Token (MM)
 
