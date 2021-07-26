@@ -1,6 +1,6 @@
 # MilionToken
 
-![Alt text](../img/vhFKhS7a.jpg)
+![Newsroom](https://media.giphy.com/media/v2xIous7mnEYg/giphy.gif)
 
 All Things Million Token (MM)
 
