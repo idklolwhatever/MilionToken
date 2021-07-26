@@ -41,29 +41,62 @@ df_new['Price Total']=df_new['Price']+df_new['Price_BSC']
 # df_x_bound['Date-Time'].sub(date).abs().idxmin()#Returns index of timestamp closest to date
 #The following will create a new column where 
 def holder_rate(row):
-    time_crt = row['Date-Time']
-    time_old = time_crt - timedelta(hours=1)
-    time_old_index = df_new['Date-Time'].sub(time_old).idxmin()
-    time_old_nearest = df_new.iloc[time_old_index]['Date-Time']
-    time_delta = time_crt - time_old_nearest
-    
     holder_crt = row['Holders Total']
-    holders_old = df_new.iloc[time_old_index]['Holders Total']
-    
-    holder_rate = (holder_crt - holders_old)/(time_delta.seconds/(60*60))
-    #pdb.set_trace()
-    print(f'time_crt: {time_crt}')
-    print(f'time_old: {time_old}')
-    print(f'time_old_index: {time_old_index}')
-    print(f'time_old_nearest: {time_old_nearest}')
-    print(f'time_delta: {time_delta}')
-    print(f'holder_crt: {holder_crt}')
-    print(f'holders_old: {holders_old}')
-    print(f'holder_rate: {holder_rate}')
-    print(f'\n')
-    return(holder_rate)
+    time_crt = row['Date-Time']
 
-df_new['Holder/Hour'] = df_new.apply(lambda row: holder_rate(row), axis=1)
+    time_old_week = time_crt - timedelta(days=7)
+    time_old_week_index = df_new['Date-Time'].sub(time_old_week).abs().idxmin()
+    time_old_week_nearest = df_new.iloc[time_old_week_index]['Date-Time']
+    time_delta_nearest_week = time_crt - time_old_week_nearest
+    holders_old_week = df_new.iloc[time_old_week_index]['Holders Total']
+
+    time_old_day = time_crt - timedelta(days=1)
+    time_old_day_index = df_new['Date-Time'].sub(time_old_day).abs().idxmin()
+    time_old_day_nearest = df_new.iloc[time_old_day_index]['Date-Time']
+    time_delta_nearest_day = time_crt - time_old_day_nearest
+    holders_old_day = df_new.iloc[time_old_day_index]['Holders Total']
+    
+    time_old_hour = time_crt - timedelta(hours=1)
+    time_old_hour_index = df_new['Date-Time'].sub(time_old_hour).abs().idxmin()
+    time_old_hour_nearest = df_new.iloc[time_old_hour_index]['Date-Time']
+    time_delta_nearest_hour = time_crt - time_old_hour_nearest
+    holders_old_hour = df_new.iloc[time_old_hour_index]['Holders Total']
+
+    time_old_minute = time_crt - timedelta(minutes=5)#Needs to be greater than 2 minutes (or whatever webscrapping interval is) otherwise it just keeps using same data and getting a zero on numerator
+    time_old_minute_index = df_new['Date-Time'].sub(time_old_minute).abs().idxmin()
+    time_old_minute_nearest = df_new.iloc[time_old_minute_index]['Date-Time']
+    time_delta_nearest_minute = time_crt - time_old_minute_nearest
+    holders_old_minute = df_new.iloc[time_old_minute_index]['Holders Total']
+    
+    
+    holder_week_rate = (holder_crt - holders_old_week)/(time_delta_nearest_week.seconds/(60*60*24*7))
+    holder_day_rate = (holder_crt - holders_old_day)/(time_delta_nearest_day.seconds/(60*60*24))
+    holder_hour_rate = (holder_crt - holders_old_hour)/(time_delta_nearest_hour.seconds/(60*60))
+    holder_minute_rate = (holder_crt - holders_old_minute)/(time_delta_nearest_minute.seconds/(60))
+    pdb.set_trace()
+    
+    print(f'time_crt: {time_crt}')
+    print(f'time_old: {time_old_hour}')
+    print(f'time_old_hour_index: {time_old_hour_index}')
+    print(f'time_old_hour_nearest: {time_old_hour_nearest}')
+    print(f'time_delta_nearest_hour: {time_delta_nearest_hour}')
+    print(f'holder_crt: {holder_crt}')
+    print(f'holders_old_hour: {holders_old_hour}')
+    print(f'holder_week_rate: {holder_week_rate}')
+    print(f'holder_day_rate: {holder_day_rate}')
+    print(f'holder_hour_rate: {holder_hour_rate}')
+    print(f'holder_minute_rate: {holder_minute_rate}')
+    print(f'\n')
+    # pdb.set_trace()
+    #return(holder_hour_rate,holder_minute_rate)
+    #return a series instead of just the values (like in comment above) or else you will get one column with a tuple of all the values!
+    return pd.Series([holder_week_rate,holder_day_rate,holder_hour_rate,holder_minute_rate],
+        index=['Holders/Day','Holders/Hour', 'Holders/5-Minutes'])
+
+df_holder_rates = df_new.apply(lambda row: holder_rate(row), axis=1).fillna(0)
+df_new = pd.concat([df_new,df_holder_rates], axis=1, ignore_index=False)
+#df_new['Holder/Hour'],df_new['Holder/Minute'] = df_new.apply(lambda row: holder_rate(row), axis=1)
+
 # df_x_bound['Holder Rate'] = df_x_bound.apply(lambda row: holder_rate(row['Date-Time'], row['Holders']))
 # #df_x_bound['Holder Rate'] =  df_x_bound['Holders Total'].apply(lambda row: holder_rate(row))
 # pdb.set_trace()

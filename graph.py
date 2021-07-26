@@ -11,9 +11,64 @@ import pdb
 import matplotlib.ticker as ticker
 import time, sys, getopt
 from tqdm import tqdm
+from datetime import timedelta
+import numpy as np
 
 print('Number of arguments:', len(sys.argv), 'arguments.')
 print('Argument List:', str(sys.argv))
+
+def holder_rate(row):
+    holder_crt = row['Holders Total']
+    time_crt = row['Date-Time']
+
+    time_old_week = time_crt - timedelta(days=7)
+    time_old_week_index = df_new['Date-Time'].sub(time_old_week).abs().idxmin()
+    time_old_week_nearest = df_new.iloc[time_old_week_index]['Date-Time']
+    time_delta_nearest_week = time_crt - time_old_week_nearest
+    holders_old_week = df_new.iloc[time_old_week_index]['Holders Total']
+
+    time_old_day = time_crt - timedelta(days=1)
+    time_old_day_index = df_new['Date-Time'].sub(time_old_day).abs().idxmin()
+    time_old_day_nearest = df_new.iloc[time_old_day_index]['Date-Time']
+    time_delta_nearest_day = time_crt - time_old_day_nearest
+    holders_old_day = df_new.iloc[time_old_day_index]['Holders Total']
+    
+    time_old_hour = time_crt - timedelta(hours=1)
+    time_old_hour_index = df_new['Date-Time'].sub(time_old_hour).abs().idxmin()
+    time_old_hour_nearest = df_new.iloc[time_old_hour_index]['Date-Time']
+    time_delta_nearest_hour = time_crt - time_old_hour_nearest
+    holders_old_hour = df_new.iloc[time_old_hour_index]['Holders Total']
+
+    time_old_minute = time_crt - timedelta(minutes=5)#Needs to be greater than 2 minutes (or whatever webscrapping interval is) otherwise it just keeps using same data and getting a zero on numerator
+    time_old_minute_index = df_new['Date-Time'].sub(time_old_minute).abs().idxmin()
+    time_old_minute_nearest = df_new.iloc[time_old_minute_index]['Date-Time']
+    time_delta_nearest_minute = time_crt - time_old_minute_nearest
+    holders_old_minute = df_new.iloc[time_old_minute_index]['Holders Total']
+    
+    
+    holder_week_rate = (holder_crt - holders_old_week)/(time_delta_nearest_week.seconds/(60*60*24*7))
+    holder_day_rate = (holder_crt - holders_old_day)/(time_delta_nearest_day.seconds/(60*60*24))
+    holder_hour_rate = (holder_crt - holders_old_hour)/(time_delta_nearest_hour.seconds/(60*60))
+    holder_minute_rate = (holder_crt - holders_old_minute)/(time_delta_nearest_minute.seconds/(60))
+    #pdb.set_trace()
+    
+    print(f'time_crt: {time_crt}')
+    print(f'time_old: {time_old_hour}')
+    print(f'time_old_hour_index: {time_old_hour_index}')
+    print(f'time_old_hour_nearest: {time_old_hour_nearest}')
+    print(f'time_delta_nearest_hour: {time_delta_nearest_hour}')
+    print(f'holder_crt: {holder_crt}')
+    print(f'holders_old_hour: {holders_old_hour}')
+    print(f'holder_week_rate: {holder_week_rate}')
+    print(f'holder_day_rate: {holder_day_rate}')
+    print(f'holder_hour_rate: {holder_hour_rate}')
+    print(f'holder_minute_rate: {holder_minute_rate}')
+    print(f'\n')
+    #pdb.set_trace()
+    #return(holder_hour_rate,holder_minute_rate)
+    #return a series instead of just the values (like in comment above) or else you will get one column with a tuple of all the values!
+    return pd.Series([holder_day_rate,holder_hour_rate,holder_minute_rate],
+        index=['Holders/Day','Holders/Hour', 'Holders/5-Minutes'])
 
 xlim_buf_frac_lft = 1.0
 xlim_buf_frac_rght = 1.0
@@ -54,7 +109,8 @@ except getopt.error as err:
 ###############################################################################
 plt.ion()
 #Create Figure and axes here with shared x-axis
-fig, (ax1, ax2, ax3) = plt.subplots(nrows=3,sharex=True,figsize=(20, 12))
+#fig, (ax1, ax2, ax3) = plt.subplots(nrows=3,sharex=True,figsize=(20, 12))
+fig, ((ax1, ax2) , (ax3, ax4)) = plt.subplots(2,2,sharex=True,figsize=(20, 12))
 
 while True:
     #Read in seperate files and change to a date format
@@ -126,8 +182,8 @@ while True:
     holders_most_recent_x = df_x_bound['Date-Time'].iloc[-1]
     holders_most_recent_y = df_x_bound['Holders Total'].iloc[-1]
     ax1.annotate(f'{holders_most_recent_y:.0f}', xy=(holders_most_recent_x,holders_most_recent_y),
-             xytext=(-50,+50), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>',connectionstyle="arc3,rad=-0.1"),
-              ha='center',fontsize=10, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
+             xytext=(-40,+40), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>',connectionstyle="arc3,rad=-0.1"),
+              ha='center',fontsize=8, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
 
     ax1.set_xlim(left=x_start, right=x_stop)
     ax1.set_ylim(bottom=df_x_bound['Holders Total'].min()*ylim_buffer_frac_bot,
@@ -232,24 +288,48 @@ while True:
     ###############################################################################################
     # AXIS 4: Holder Rates
     ###############################################################################################
-    # #pdb.set_trace()
-    # date = pd.to_datetime('2021-07-16 09:44:36')
-    # df_x_bound['Date-Time'].sub(date).abs().idxmin()#Returns index of timestamp
-    # #The following will create a new column where 
-    # def holder_rate(row):
-    #     print(type(row))
-    #     #print(row['Holders Total'])
-    #     #pdb.set_trace()
-    #     return(row+1)
-    pdb.set_trace()
-    # df_x_bound['Holder Rate'] = df_x_bound.apply(lambda row: holder_rate(row['Date-Time'], row['Holders']))
-    # #df_x_bound['Holder Rate'] =  df_x_bound['Holders Total'].apply(lambda row: holder_rate(row))
-    # pdb.set_trace()
-    # df_x_bound['Holder Rate'] = df_x_bound['Holders Total'].apply(lambda x: (x - df_x_bound['Holders Total'].iloc[df_x_bound['Date-Time'].sub(date).abs().idxmin()])/((x['Date-Time']-date).seconds) )     ; df_x_bound
-    # ##df_x_bound['Holders'].apply(lambda x: df_x_bound['Date-Time'].sub(date).abs().idxmin())
+    #df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row), axis=1).fillna(0)
+    #df_x_bound = pd.concat([df_x_bound, df_holder_rates], axis=1, ignore_index=False)
+    df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row), axis=1).fillna(0)
+    df_x_bound = pd.concat([df_x_bound,df_holder_rates], axis=1, ignore_index=False)
+
+    # ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/5-Minutes'], linewidth=linewidth, color='black')
+    # ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/5-Minutes'], label = "EtherScan",color='blue', alpha=alpha)
+    #pdb.set_trace()
+    ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], linewidth=linewidth, color='black')
+    ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], label = "BSC and EtherScan Hour Delta",color='red', alpha=alpha)
     
-    
-    
+    ax4.set(xlabel='Date-Time', ylabel='Rate Change in Holders')
+    ax4.set_title(f'Etherscan and BSC Webscrape Rate Change in Holders \n Start: {x_start} Stop: {x_stop}', fontsize=14,fontweight='bold')
+    ax4.grid(color='black', linestyle='-', linewidth=1, which='major')
+    ax4.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
+    ax4.set_xlim(left=x_start, right=x_stop)
+    ax4.set_ylim(bottom=df_x_bound['Holders/Hour'].min()*ylim_buffer_frac_bot,
+                 top=df_x_bound['Holders/Hour'].max()*ylim_buffer_frac_top)
+    ax4.legend(loc='lower right')
+    ax4.set_facecolor('white')
+
+    #ax4.set_yscale('log')
+    #pdb.set_trace()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ###############################################################################################
+    # FIGURE FORMATING: 
+    ###############################################################################################
     fig.autofmt_xdate() # In this case, it just rotates the tick labels
     ax1.set_facecolor('white')
     plt.tight_layout()
@@ -266,6 +346,8 @@ while True:
     fig.canvas.stop_event_loop()
     ax1.clear()
     ax2.clear()
+    ax3.clear()
+    ax4.clear()
     plt.cla()
     #time.sleep(2*60)
     #plt.draw()
