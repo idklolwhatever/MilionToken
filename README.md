@@ -1,6 +1,6 @@
 # MilionToken
 
-![Alt text](../img/vhFKhS7a.jpg "Million Token")
+![Alt text](../img/vhFKhS7a.jpg)
 
 All Things Million Token (MM)
 
