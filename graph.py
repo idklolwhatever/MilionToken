@@ -191,21 +191,21 @@ while True:
     df_new['Holders Total']=df_new['Holders']+df_new['Holders_BSC']
     df_new['Market Cap Total']=df_new['Market Cap']+df_new['Market Cap_BSC']
     df_new['Price Total']=df_new['Price']+df_new['Price_BSC']
-
+    
     df_x_bound = df_new[(df_new['Date-Time'] >= sys.argv[1]) & (df_new['Date-Time']<= sys.argv[2])]
     
-    x_start = df[df['Date-Time'] >= sys.argv[1]]['Date-Time'].min() #'2021-07-16 09:49:37']
-    x_stop  = df[df['Date-Time'] <= sys.argv[2]]['Date-Time'].max()
+    x_start = df_new[df_new['Date-Time'] >= sys.argv[1]]['Date-Time'].min() #'2021-07-16 09:49:37']
+    x_stop  = df_new[df_new['Date-Time'] <= sys.argv[2]]['Date-Time'].max()
     time_delta = (x_stop - x_start)
-    
+    #pdb.set_trace()
     linewidth=1
     alpha=0.5
 
     #First is just BSC
-    ax1.plot(df['Date-Time'], df['Holders'], linewidth=linewidth, color='black', marker='.', markerfacecolor='red', markersize=4, markeredgecolor='black', markeredgewidth='.5')#plt.fill_between(ages, total_population)
+    ax1.plot(df_new['Date-Time'], df_new['Holders'], linewidth=linewidth, color='black', marker='.', markerfacecolor='red', markersize=4, markeredgecolor='black', markeredgewidth='.5')#plt.fill_between(ages, total_population)
 
     #ax1.scatter(df['Date-Time'], df['Holders'], marker='.',color='red')
-    ax1.fill_between(df['Date-Time'], df['Holders'],label="EtherScan", color='blue', alpha=alpha)
+    ax1.fill_between(df_new['Date-Time'], df_new['Holders'],label="EtherScan", color='blue', alpha=alpha)
 
     #Second is just BSC
     ax1.plot(df_bsc['Date-Time'], df_bsc['Holders'], linewidth=linewidth, color='black')# Graph just thse BSC Data
@@ -226,13 +226,13 @@ while True:
     max_hold = df_new[df_new['Holders Total'] == df_new['Holders Total'].max()].iloc[0]['Holders Total']
     max_hold_date = df_new[df_new['Holders Total'] == df_new['Holders Total'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
     ax1.annotate(f'BSC & EtherScan Holders ATH {max_hold:.0f}', xy=(max_hold_date,max_hold),
-             xytext=(0,+40), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>'),
-              ha='center',fontsize=10, fontweight='bold')
+             xytext=(0,+50), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>'),
+              ha='center',fontsize=8, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
 
     holders_most_recent_x = df_x_bound['Date-Time'].iloc[-1]
     holders_most_recent_y = df_x_bound['Holders Total'].iloc[-1]
     ax1.annotate(f'{holders_most_recent_y:.0f}', xy=(holders_most_recent_x,holders_most_recent_y),
-             xytext=(-40,+40), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>',connectionstyle="arc3,rad=-0.1"),
+             xytext=(-20,+20), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>',connectionstyle="arc3,rad=-0.1"),
               ha='center',fontsize=8, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
 
     ax1.set_xlim(left=x_start, right=x_stop)
@@ -265,9 +265,11 @@ while True:
     #Annotations
     max_mc = df_esc[df_esc['Market Cap'] == df_esc['Market Cap'].max()].iloc[0]['Market Cap']
     max_mc_date = df_esc[df_esc['Market Cap'] == df_esc['Market Cap'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
-    ax2.annotate(f'Market Cap ATH {max_mc}', xy=(max_mc_date,max_mc), xytext=(10,-100),
-                textcoords='offset pixels', arrowprops=dict(arrowstyle='-|>'))
     
+    ax2.annotate(f'BSC & EtherScan Holders ATH {max_mc:.0f}', xy=(max_mc_date,max_mc),
+        xytext=(0,+50), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>'),
+        ha='center',fontsize=8, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
+ 
     mc_most_recent_x = df_x_bound['Date-Time'].iloc[-1]
     mc_most_recent_y = df_x_bound['Market Cap Total'].iloc[-1]
     ax2.annotate(f'{mc_most_recent_y:.0f}', xy=(mc_most_recent_x,mc_most_recent_y),
@@ -298,7 +300,7 @@ while True:
     max_price = df_esc[df_esc['Price'] == df_esc['Price'].max()].iloc[0]['Price']
     max_price_date = df_esc[df_esc['Price'] == df_esc['Price'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
     ax3.annotate(f'Price ATH {max_price}', xy=(max_price_date,max_price), xytext=(10,-100),
-                textcoords='offset pixels', arrowprops=dict(arrowstyle='-|>'))
+                textcoords='offset pixels', arrowprops=dict(arrowstyle='-|>'),bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
     
     price_most_recent_x = df_x_bound['Date-Time'].iloc[-1]
     price_most_recent_y = df_x_bound['Price Total'].iloc[-1]
