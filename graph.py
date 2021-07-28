@@ -13,44 +13,47 @@ import time, sys, getopt
 from tqdm import tqdm
 from datetime import timedelta
 import numpy as np
+import os.path
+from pathlib import Path
 
 print('Number of arguments:', len(sys.argv), 'arguments.')
 print('Argument List:', str(sys.argv))
 
-def holder_rate(row):
-    holder_crt = row['Holders Total']
+#This function is used figuring out various holder rates be being passed into and apply command in Pandas
+def holder_rate(row, df_new):
+    df_new.reset_index(drop=True)
+    holder_crt = row['Holders']
     time_crt = row['Date-Time']
 
-    time_old_week = time_crt - timedelta(days=7)
+    time_old_week = time_crt - timedelta(days=7)#Desired Time Delta
     time_old_week_index = df_new['Date-Time'].sub(time_old_week).abs().idxmin()
+    #pdb.set_trace()
     time_old_week_nearest = df_new.iloc[time_old_week_index]['Date-Time']
     time_delta_nearest_week = time_crt - time_old_week_nearest
-    holders_old_week = df_new.iloc[time_old_week_index]['Holders Total']
+    holders_old_week = df_new.iloc[time_old_week_index]['Holders']
 
     time_old_day = time_crt - timedelta(days=1)
     time_old_day_index = df_new['Date-Time'].sub(time_old_day).abs().idxmin()
     time_old_day_nearest = df_new.iloc[time_old_day_index]['Date-Time']
     time_delta_nearest_day = time_crt - time_old_day_nearest
-    holders_old_day = df_new.iloc[time_old_day_index]['Holders Total']
+    holders_old_day = df_new.iloc[time_old_day_index]['Holders']
     
     time_old_hour = time_crt - timedelta(hours=1)
     time_old_hour_index = df_new['Date-Time'].sub(time_old_hour).abs().idxmin()
     time_old_hour_nearest = df_new.iloc[time_old_hour_index]['Date-Time']
     time_delta_nearest_hour = time_crt - time_old_hour_nearest
-    holders_old_hour = df_new.iloc[time_old_hour_index]['Holders Total']
+    holders_old_hour = df_new.iloc[time_old_hour_index]['Holders']
 
     time_old_minute = time_crt - timedelta(minutes=5)#Needs to be greater than 2 minutes (or whatever webscrapping interval is) otherwise it just keeps using same data and getting a zero on numerator
     time_old_minute_index = df_new['Date-Time'].sub(time_old_minute).abs().idxmin()
     time_old_minute_nearest = df_new.iloc[time_old_minute_index]['Date-Time']
     time_delta_nearest_minute = time_crt - time_old_minute_nearest
-    holders_old_minute = df_new.iloc[time_old_minute_index]['Holders Total']
-    
+    holders_old_minute = df_new.iloc[time_old_minute_index]['Holders'] 
     
     holder_week_rate = (holder_crt - holders_old_week)/(time_delta_nearest_week.seconds/(60*60*24*7))
     holder_day_rate = (holder_crt - holders_old_day)/(time_delta_nearest_day.seconds/(60*60*24))
     holder_hour_rate = (holder_crt - holders_old_hour)/(time_delta_nearest_hour.seconds/(60*60))
     holder_minute_rate = (holder_crt - holders_old_minute)/(time_delta_nearest_minute.seconds/(60))
-    #pdb.set_trace()
     
     print(f'time_crt: {time_crt}')
     print(f'time_old: {time_old_hour}')
@@ -64,34 +67,31 @@ def holder_rate(row):
     print(f'holder_hour_rate: {holder_hour_rate}')
     print(f'holder_minute_rate: {holder_minute_rate}')
     print(f'\n')
-    #pdb.set_trace()
     #return(holder_hour_rate,holder_minute_rate)
     #return a series instead of just the values (like in comment above) or else you will get one column with a tuple of all the values!
-    return pd.Series([holder_day_rate,holder_hour_rate,holder_minute_rate],
-        index=['Holders/Day','Holders/Hour', 'Holders/5-Minutes'])
+    return pd.Series([holder_day_rate,holder_hour_rate,holder_minute_rate], index=['Holders/Day','Holders/Hour', 'Holders/5-Minutes'])
 
+#These options are used in creating fractional buffer areas for the graphs
 xlim_buf_frac_lft = 1.0
 xlim_buf_frac_rght = 1.0
 ylim_buffer_frac_top = 1.01
 ylim_buffer_frac_bot = 0.99
 
+###################################################################################################
+# Create Startup Options
+###################################################################################################
 # Remove 1st argument from the
 # list of command line arguments
 argumentList = sys.argv[1:]
- 
 # Options
 options = "hmo:"
- 
 # Long options
 long_options = ["Help", "My_file", "Output ="]
- 
 try:
     # Parsing argument
     arguments, values = getopt.getopt(argumentList, options, long_options)
-     
     # checking each argument
     for currentArgument, currentValue in arguments:
- 
         if currentArgument in ("-h", "--Help"):
             print ("Displaying Help\n")
             print ("Simply enter a start and stop date-time in quotations!")
@@ -99,26 +99,76 @@ try:
             quit() 
         elif currentArgument in ("-m", "--My_file"):
             print ("Displaying file_name:", sys.argv[0])
-             
         elif currentArgument in ("-o", "--Output"):
-            print (("Enabling special output mode (% s)") % (currentValue))
-             
+            print (("Enabling special output mode (% s)") % (currentValue))        
 except getopt.error as err:
     # output error, and return with an error code
     print (str(err))
+
 ###############################################################################
-plt.ion()
-#Create Figure and axes here with shared x-axis
-#fig, (ax1, ax2, ax3) = plt.subplots(nrows=3,sharex=True,figsize=(20, 12))
+# Check if unmodified and modified data files exist! Then create the modified versions
+# where the holder rates and potential future columns could be added
+###############################################################################
+def read_data(file):
+    df = pd.read_csv(file,index_col=False)
+    df['Date-Time'] = pd.to_datetime(df['Date-Time'])
+    return(df)
+
+df_esc = read_data("./data/data_esc.csv")
+df_bsc = read_data("./data/data_bsc.csv")
+
+data_ESC = Path("./data/data_esc.csv")
+data_BSC = Path("./data/data_bsc.csv")
+data_ESC_mod = Path("./data/data_esc_mod.csv")
+data_BSC_mod = Path("./data/data_bsc_mod.csv")
+
+#Check if modified version exists and if not, create them
+for list_of_lists in [[data_ESC_mod,df_esc,'esc'], [data_BSC_mod,df_bsc,'bsc']]:
+    file = list_of_lists[0]
+    df = list_of_lists[1]
+    suffix = list_of_lists[2]
+    try:
+        my_abs_path = file.resolve(strict=True)
+    except FileNotFoundError:
+        print(f'The following files DO NOT EXISTS and are being created: {file}')
+        df_holder_rates = df.apply(lambda row: holder_rate(row,df), axis=1).fillna(0) 
+        pd.concat([df, df_holder_rates], axis=1, ignore_index=False).to_csv(f'./data/data_{suffix}_mod.csv',index=False)
+        #df_mod = pd.concat([df, df_holder_rates], axis=1, ignore_index=False)
+        #df_mod.to_csv(f'./data/data_{suffix}_mod.csv',index=False)
+    else:
+        print(f'\n The following files already EXISTS: {file} \n')
+        # exists
+
+df_esc_mod = read_data("./data/data_esc_mod.csv")
+df_bsc_mod = read_data("./data/data_bsc_mod.csv")
+
+###############################################################################
+plt.ion()#Enable interactive mode!
+###############################################################################
+# #Create Figure and axes here with shared x-axis
 fig, ((ax1, ax2) , (ax3, ax4)) = plt.subplots(2,2,sharex=True,figsize=(20, 12))
 
 while True:
-    #Read in seperate files and change to a date format
-    df = pd.read_csv('data.csv')
-    df['Date-Time'] = pd.to_datetime(df['Date-Time'])
-
-    df_bsc = pd.read_csv('data_bsc.csv')
-    df_bsc['Date-Time'] = pd.to_datetime(df_bsc['Date-Time'])
+    df_esc = read_data("./data/data_esc.csv")
+    df_bsc = read_data("./data/data_bsc.csv")
+    #Cycle through different data files
+    for list_of_lists in [[df_esc,df_esc_mod,'esc'], [df_bsc,df_bsc_mod,'bsc']]:
+        df = list_of_lists[0]
+        df_mod = list_of_lists[1]
+        suffix = list_of_lists[2]
+        #Create series in which the rows in which the new data does not show up in modified data files
+        series =df['Date-Time'].isin(df_mod['Date-Time'])
+        index_list = series[series==False].index.to_list()
+        df_mod_missing_rows = df.iloc[index_list,:]
+        
+        num_rows_missing = df_mod_missing_rows.shape[0]
+        if df_mod_missing_rows.shape[0] > 0:
+            print(f'\n There are {num_rows_missing} rows of new information that are missing and are now being updated to {suffix} modified data file \n')
+            df_holder_rates = df_mod_missing_rows.apply(lambda row: holder_rate(row,df), axis=1).fillna(0) 
+            df_concat = pd.concat([df_mod_missing_rows, df_holder_rates], axis=1, ignore_index=False)#.to_csv(f'./data/data_{suffix}_mod.csv',index=False)
+            df_concat.to_csv(f'./data/data_{suffix}_mod.csv', mode='a', header=False, index=False)
+        
+    
     ###########################################################################
     # WARNING: This part was extremley confusing to troubleshoot to come up with graphable dataframe between two dates of interest!
     # It was absolutely needed because of the dataframes needing to be intersection merged (inner)and then annoying
@@ -127,9 +177,9 @@ while True:
     # data from the earlier dates  
     ###########################################################################
     # Need to combine Dfs based on closest timestamps down to the closest reasonable time (minutes)
-    idk = df.merge(df_bsc, how='inner', on=['Month','Day','Hour','Minute'], suffixes=("","_BSC"))
+    idk = df_esc.merge(df_bsc, how='inner', on=['Month','Day','Hour','Minute'], suffixes=("","_BSC"))
     #Now need to create another dataframe that only contains data up until BSC starts recording
-    lol = df[df['Date-Time'] <= df_bsc['Date-Time'].min()]
+    lol = df_esc[df_esc['Date-Time'] <= df_bsc['Date-Time'].min()]
     #Now need to concat one on top of the other and then sort by Date-Time and make sure to fill in NAN and NAT's with zeros for later mathmatics
     df_new = pd.concat([idk,lol]).sort_values(by=['Date-Time']).fillna(0)
     ###############################################################################
@@ -194,8 +244,8 @@ while True:
     ###############################################################################
     ###############################################################################
     # First is just EtherScan
-    ax2.plot(df['Date-Time'], df['Market Cap'], linewidth=linewidth, color='black')
-    ax2.fill_between(df['Date-Time'], df['Market Cap'], label = "EtherScan",color='blue', alpha=alpha)
+    ax2.plot(df_esc['Date-Time'], df_esc['Market Cap'], linewidth=linewidth, color='black')
+    ax2.fill_between(df_esc['Date-Time'], df_esc['Market Cap'], label = "EtherScan",color='blue', alpha=alpha)
 
     #Second is just BSC
     ax2.plot(df_bsc['Date-Time'], df_bsc['Market Cap'], linewidth=linewidth, color='black')
@@ -213,8 +263,8 @@ while True:
     ax2.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
 
     #Annotations
-    max_mc = df[df['Market Cap'] == df['Market Cap'].max()].iloc[0]['Market Cap']
-    max_mc_date = df[df['Market Cap'] == df['Market Cap'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
+    max_mc = df_esc[df_esc['Market Cap'] == df_esc['Market Cap'].max()].iloc[0]['Market Cap']
+    max_mc_date = df_esc[df_esc['Market Cap'] == df_esc['Market Cap'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
     ax2.annotate(f'Market Cap ATH {max_mc}', xy=(max_mc_date,max_mc), xytext=(10,-100),
                 textcoords='offset pixels', arrowprops=dict(arrowstyle='-|>'))
     
@@ -235,8 +285,8 @@ while True:
     ##############################################################################
     # AXIS 3
     ##############################################################################
-    ax3.plot(df['Date-Time'], df['Price'], linewidth=linewidth, color='black')
-    ax3.fill_between(df['Date-Time'], df['Price'], label = "EtherScan",color='blue', alpha=alpha)
+    ax3.plot(df_esc['Date-Time'], df_esc['Price'], linewidth=linewidth, color='black')
+    ax3.fill_between(df_esc['Date-Time'], df_esc['Price'], label = "EtherScan",color='blue', alpha=alpha)
 
     #Formating
     #ax3.set(title=f'Etherscan and BSC Webscrape MM Price ($/MM) \n Start: {x_start} Stop: {x_stop}', xlabel='Date-Time', ylabel='Price in $/MM')
@@ -245,8 +295,8 @@ while True:
     ax3.grid(color='black', linestyle='-', linewidth=1, which='major')
     ax3.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
     #Annotations
-    max_price = df[df['Price'] == df['Price'].max()].iloc[0]['Price']
-    max_price_date = df[df['Price'] == df['Price'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
+    max_price = df_esc[df_esc['Price'] == df_esc['Price'].max()].iloc[0]['Price']
+    max_price_date = df_esc[df_esc['Price'] == df_esc['Price'].max()].head(1)['Date-Time'].values #df[df['Holders'] == df['Holders'].max()].iloc[0]['Date-Time']
     ax3.annotate(f'Price ATH {max_price}', xy=(max_price_date,max_price), xytext=(10,-100),
                 textcoords='offset pixels', arrowprops=dict(arrowstyle='-|>'))
     
@@ -288,42 +338,21 @@ while True:
     ###############################################################################################
     # AXIS 4: Holder Rates
     ###############################################################################################
-    #df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row), axis=1).fillna(0)
-    #df_x_bound = pd.concat([df_x_bound, df_holder_rates], axis=1, ignore_index=False)
-    df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row), axis=1).fillna(0)
-    df_x_bound = pd.concat([df_x_bound,df_holder_rates], axis=1, ignore_index=False)
+    # df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row), axis=1).fillna(0)
+    # df_x_bound = pd.concat([df_x_bound,df_holder_rates], axis=1, ignore_index=False)
 
-    # ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/5-Minutes'], linewidth=linewidth, color='black')
-    # ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/5-Minutes'], label = "EtherScan",color='blue', alpha=alpha)
-    #pdb.set_trace()
-    ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], linewidth=linewidth, color='black')
-    ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], label = "BSC and EtherScan Hour Delta",color='red', alpha=alpha)
+    # ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], linewidth=linewidth, color='black')
+    # ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], label = "BSC and EtherScan Hour Delta",color='red', alpha=alpha)
     
-    ax4.set(xlabel='Date-Time', ylabel='Rate Change in Holders')
-    ax4.set_title(f'Etherscan and BSC Webscrape Rate Change in Holders \n Start: {x_start} Stop: {x_stop}', fontsize=14,fontweight='bold')
-    ax4.grid(color='black', linestyle='-', linewidth=1, which='major')
-    ax4.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
-    ax4.set_xlim(left=x_start, right=x_stop)
-    ax4.set_ylim(bottom=df_x_bound['Holders/Hour'].min()*ylim_buffer_frac_bot,
-                 top=df_x_bound['Holders/Hour'].max()*ylim_buffer_frac_top)
-    ax4.legend(loc='lower right')
-    ax4.set_facecolor('white')
-
-    #ax4.set_yscale('log')
-    #pdb.set_trace()
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # ax4.set(xlabel='Date-Time', ylabel='Rate Change in Holders')
+    # ax4.set_title(f'Etherscan and BSC Webscrape Rate Change in Holders \n Start: {x_start} Stop: {x_stop}', fontsize=14,fontweight='bold')
+    # ax4.grid(color='black', linestyle='-', linewidth=1, which='major')
+    # ax4.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
+    # ax4.set_xlim(left=x_start, right=x_stop)
+    # ax4.set_ylim(bottom=df_x_bound['Holders/Hour'].min()*ylim_buffer_frac_bot,
+    #              top=df_x_bound['Holders/Hour'].max()*ylim_buffer_frac_top)
+    # ax4.legend(loc='lower right')
+    # ax4.set_facecolor('white')
 
 
 

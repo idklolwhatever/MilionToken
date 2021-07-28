@@ -60,7 +60,7 @@ while True:
                         })
             print(df_es)
 
-            with open('data.csv', 'a') as f: # 'a' is for append mode
+            with open('./data/data_esc.csv', 'a') as f: # 'a' is for append mode
                 df_es.to_csv(f, header=False)
 
         if  urlopen(req_bsc).read():### Need to  have error pass here 
@@ -94,7 +94,7 @@ while True:
                         'Market Cap [$USD]': [market_cap]
                         })
             print(df_bsc)
-            with open('data_bsc.csv', 'a') as f: # 'a' is for append mode
+            with open('./data/data_bsc.csv', 'a') as f: # 'a' is for append mode
                 df_bsc.to_csv(f, header=False)
         #pdb.set_trace()
         total_holders = df_bsc['Holders'].values+df_es['Holders'].values
