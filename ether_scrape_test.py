@@ -62,7 +62,7 @@ while True:
                         })
             print(df_es)
 
-            with open('./data/data_esc.csv', 'a') as f: # 'a' is for append mode
+            with open('./data/data_esc_test.csv', 'a') as f: # 'a' is for append mode
                 df_es.to_csv(f, header=False)
 
         if  urlopen(req_bsc).read():### Need to  have error pass here 
@@ -82,9 +82,7 @@ while True:
             #holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
             market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
 
-            # For BSC, supply is ETH supply locked
-            # when you bridge you lock the tokens in aspecial bridge contract on ETH
-            # Active tokens = (999,999-24,2554.072249
+            
             max_supply = float(soup.body.find_all('span', attrs={'class':'hash-tag text-truncate'})[0].getText().replace(',',''))
 
             df_bsc = pd.DataFrame({'Date-Time': [time.ctime()],
@@ -102,7 +100,7 @@ while True:
                         'Max Supply': [max_supply]
                         })
             print(df_bsc)
-            with open('./data/data_bsc.csv', 'a') as f: # 'a' is for append mode
+            with open('./data/data_bsc_test.csv', 'a') as f: # 'a' is for append mode
                 df_bsc.to_csv(f, header=False)
         
         total_holders = df_bsc['Holders'].values+df_es['Holders'].values

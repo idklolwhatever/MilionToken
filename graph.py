@@ -139,8 +139,7 @@ for list_of_lists in [[data_ESC_mod,df_esc,'esc'], [data_BSC_mod,df_bsc,'bsc']]:
         print(f'\n The following files already EXISTS: {file} \n')
         # exists
 
-df_esc_mod = read_data("./data/data_esc_mod.csv")
-df_bsc_mod = read_data("./data/data_bsc_mod.csv")
+
 
 ###############################################################################
 plt.ion()#Enable interactive mode!
@@ -151,6 +150,9 @@ fig, ((ax1, ax2) , (ax3, ax4)) = plt.subplots(2,2,sharex=True,figsize=(20, 12))
 while True:
     df_esc = read_data("./data/data_esc.csv")
     df_bsc = read_data("./data/data_bsc.csv")
+    df_esc_mod = read_data("./data/data_esc_mod.csv")
+    df_bsc_mod = read_data("./data/data_bsc_mod.csv")
+
     #Cycle through different data files
     for list_of_lists in [[df_esc,df_esc_mod,'esc'], [df_bsc,df_bsc_mod,'bsc']]:
         df = list_of_lists[0]
@@ -163,12 +165,14 @@ while True:
         
         num_rows_missing = df_mod_missing_rows.shape[0]
         if df_mod_missing_rows.shape[0] > 0:
+            print(df_mod_missing_rows)
             print(f'\n There are {num_rows_missing} rows of new information that are missing and are now being updated to {suffix} modified data file \n')
             df_holder_rates = df_mod_missing_rows.apply(lambda row: holder_rate(row,df), axis=1).fillna(0) 
             df_concat = pd.concat([df_mod_missing_rows, df_holder_rates], axis=1, ignore_index=False)#.to_csv(f'./data/data_{suffix}_mod.csv',index=False)
+            print(f'Saving appended on new data to the modified data file data_{suffix}_mod.csv')
             df_concat.to_csv(f'./data/data_{suffix}_mod.csv', mode='a', header=False, index=False)
-        
-    
+
+    #pdb.set_trace()
     ###########################################################################
     # WARNING: This part was extremley confusing to troubleshoot to come up with graphable dataframe between two dates of interest!
     # It was absolutely needed because of the dataframes needing to be intersection merged (inner)and then annoying
@@ -177,15 +181,14 @@ while True:
     # data from the earlier dates  
     ###########################################################################
     # Need to combine Dfs based on closest timestamps down to the closest reasonable time (minutes)
-    idk = df_esc.merge(df_bsc, how='inner', on=['Month','Day','Hour','Minute'], suffixes=("","_BSC"))
+    idk = df_esc_mod.merge(df_bsc_mod, how='inner', on=['Month','Day','Hour','Minute'], suffixes=("","_BSC"))
     #Now need to create another dataframe that only contains data up until BSC starts recording
-    lol = df_esc[df_esc['Date-Time'] <= df_bsc['Date-Time'].min()]
+    lol = df_esc_mod[df_esc_mod['Date-Time'] <= df_bsc['Date-Time'].min()]
     #Now need to concat one on top of the other and then sort by Date-Time and make sure to fill in NAN and NAT's with zeros for later mathmatics
     df_new = pd.concat([idk,lol]).sort_values(by=['Date-Time']).fillna(0)
     ###############################################################################
     # WARNING:
     ###########################################################################
-    #df_new = df.merge(df_bsc, how='outer', on=['Month','Day','Hour','Minute'], suffixes=("","_BSC")).fillna(0)
     #Create a new column for the new total column for holders and market cap
     
     df_new['Holders Total']=df_new['Holders']+df_new['Holders_BSC']
@@ -201,19 +204,21 @@ while True:
     linewidth=1
     alpha=0.5
 
-    #First is just BSC
-    ax1.plot(df_new['Date-Time'], df_new['Holders'], linewidth=linewidth, color='black', marker='.', markerfacecolor='red', markersize=4, markeredgecolor='black', markeredgewidth='.5')#plt.fill_between(ages, total_population)
+    #Order matters when plotting these as the older figures go ontop the new ones
+    #First is both EtherScan nd BSC
+    ax1.plot(df_new['Date-Time'], df_new['Holders Total'], linewidth=linewidth, color='black')
+    ax1.fill_between(df_new['Date-Time'], df_new['Holders Total'],label = "BSC and EtherScan", color='green', alpha=alpha)
 
+    #Second is just EtherScan
+    ax1.plot(df_new['Date-Time'], df_new['Holders'], linewidth=linewidth, color='black', marker='.', markerfacecolor='red', markersize=4, markeredgecolor='black', markeredgewidth='.5')#plt.fill_between(ages, total_population)
     #ax1.scatter(df['Date-Time'], df['Holders'], marker='.',color='red')
     ax1.fill_between(df_new['Date-Time'], df_new['Holders'],label="EtherScan", color='blue', alpha=alpha)
 
-    #Second is just BSC
+    #Third is just BSC
     ax1.plot(df_bsc['Date-Time'], df_bsc['Holders'], linewidth=linewidth, color='black')# Graph just thse BSC Data
     ax1.fill_between(df_bsc['Date-Time'], df_bsc['Holders'],label="BSC", color='red', alpha=alpha)
 
-    #Third is both EtherScan nd BSC
-    ax1.plot(df_new['Date-Time'], df_new['Holders Total'], linewidth=linewidth, color='black')
-    ax1.fill_between(df_new['Date-Time'], df_new['Holders Total'],label = "BSC and EtherScan", color='green', alpha=0.7)
+
 
     #Formating
     #ax1.set(title=f'Etherscan and BSC Webscrape MM Holders \n Start: {x_start} Stop: {x_stop}', xlabel='Date-Time', ylabel='Number of Holders')
@@ -340,21 +345,21 @@ while True:
     ###############################################################################################
     # AXIS 4: Holder Rates
     ###############################################################################################
-    # df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row), axis=1).fillna(0)
-    # df_x_bound = pd.concat([df_x_bound,df_holder_rates], axis=1, ignore_index=False)
-
-    # ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], linewidth=linewidth, color='black')
-    # ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], label = "BSC and EtherScan Hour Delta",color='red', alpha=alpha)
+    #df_holder_rates = df_x_bound.apply(lambda row: holder_rate(row,df_new), axis=1).fillna(0)
+    #df_x_bound = pd.concat([df_x_bound,df_holder_rates], axis=1, ignore_index=False)
+    #pdb.set_trace()
+    ax4.plot(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], linewidth=linewidth, color='black')
+    ax4.fill_between(df_x_bound['Date-Time'], df_x_bound['Holders/Hour'], label = "BSC and EtherScan Hour Delta",color='red', alpha=alpha)
     
-    # ax4.set(xlabel='Date-Time', ylabel='Rate Change in Holders')
-    # ax4.set_title(f'Etherscan and BSC Webscrape Rate Change in Holders \n Start: {x_start} Stop: {x_stop}', fontsize=14,fontweight='bold')
-    # ax4.grid(color='black', linestyle='-', linewidth=1, which='major')
-    # ax4.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
-    # ax4.set_xlim(left=x_start, right=x_stop)
-    # ax4.set_ylim(bottom=df_x_bound['Holders/Hour'].min()*ylim_buffer_frac_bot,
-    #              top=df_x_bound['Holders/Hour'].max()*ylim_buffer_frac_top)
-    # ax4.legend(loc='lower right')
-    # ax4.set_facecolor('white')
+    ax4.set(xlabel='Date-Time', ylabel='Rate Change in Holders')
+    ax4.set_title(f'Etherscan and BSC Webscrape Rate Change in Holders \n Start: {x_start} Stop: {x_stop}', fontsize=14,fontweight='bold')
+    ax4.grid(color='black', linestyle='-', linewidth=1, which='major')
+    ax4.grid(color='grey', linestyle='-', linewidth=linewidth, which='minor', alpha=0.25)
+    ax4.set_xlim(left=x_start, right=x_stop)
+    ax4.set_ylim(bottom=df_x_bound['Holders/Hour'].min()*ylim_buffer_frac_bot,
+                 top=df_x_bound['Holders/Hour'].max()*ylim_buffer_frac_top)
+    ax4.legend(loc='lower right')
+    ax4.set_facecolor('white')
 
 
 
