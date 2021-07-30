@@ -10,4 +10,4 @@ Run graph.py like this as an example:
 python3.9 graph.py '2021-07-23 12:00:00' '2022-07-30 00:00:00'
 
 If all goes well, you should get an automatically updating graph with database text files that look like the following
-![Example](Figure_1.png)
+![Example](img/Figure_1.png)
