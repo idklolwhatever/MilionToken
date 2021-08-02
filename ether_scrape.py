@@ -68,8 +68,8 @@ while True:
         if  urlopen(req_bsc).read():### Need to  have error pass here 
             html = urlopen(req_bsc).read() 
             soup = BeautifulSoup(html,'html.parser')
-
-            price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[12].text.split(' ')[0].split('$')[1])
+            #pdb.set_trace()
+            price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[11].text.split(' ')[0].split('$')[1])
             #print('TEST2 '*10)
             #print(soup.body.find('div', attrs={'class': 'mr-3'}).prettify()    )
             #print('NEXT2\n')
