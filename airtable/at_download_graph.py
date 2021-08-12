@@ -12,7 +12,7 @@ url = "https://api.airtable.com/v0/" + base_id + "/" + table_name
 
 params=()#Use this to select all records
 
-api_key = "keyZj1YTbjmij4snl"
+api_key = ""
 headers = {"Authorization": "Bearer " + api_key}
 
 params = ()

@@ -19,7 +19,7 @@ from airtable import Airtable
 #https://pythonhowtoprogram.com/how-to-update-the-airtable-using-python3/
 base_key = 'appzg6zehJO2LASwA' # Insert the Base ID of your working base
 table_name = 'data_bsc' #Insert the name of the table in your working base
-api_key = 'key5wRuTwYsRNvUyZ' #Insert your API Key
+api_key = '' #Insert your API Key
 airtable = Airtable(base_key, table_name, api_key)
 airtable_new = Airtable(base_key, 'idklol', api_key)
 print(airtable)
