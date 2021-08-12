@@ -234,6 +234,7 @@ while True:
              xytext=(0,+50), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>'),
               ha='center',fontsize=8, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
 
+    #pdb.set_trace()
     holders_most_recent_x = df_x_bound['Date-Time'].iloc[-1]
     holders_most_recent_y = df_x_bound['Holders Total'].iloc[-1]
     ax1.annotate(f'{holders_most_recent_y:.0f}', xy=(holders_most_recent_x,holders_most_recent_y),
@@ -292,6 +293,7 @@ while True:
     ##############################################################################
     # AXIS 3
     ##############################################################################
+    
     ax3.plot(df_esc['Date-Time'], df_esc['Price'], linewidth=linewidth, color='black')
     ax3.fill_between(df_esc['Date-Time'], df_esc['Price'], label = "EtherScan",color='blue', alpha=alpha)
 
@@ -308,15 +310,17 @@ while True:
                 textcoords='offset pixels', arrowprops=dict(arrowstyle='-|>'),bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
     
     price_most_recent_x = df_x_bound['Date-Time'].iloc[-1]
-    price_most_recent_y = df_x_bound['Price Total'].iloc[-1]
+    price_most_recent_y = df_x_bound['Price Total'].iloc[-1]/2
     ax3.annotate(f'{price_most_recent_y:.0f}', xy=(price_most_recent_x,price_most_recent_y),
              xytext=(-50,+50), xycoords='data', textcoords='offset pixels',arrowprops=dict(arrowstyle='-|>',connectionstyle="arc3,rad=-0.1"),
               ha='center',fontsize=10, fontweight='bold',bbox=dict(boxstyle="round4", fc="w"), alpha=0.5)
     
+    
     ax3.set_xlim(left=x_start, right=x_stop)
-    ax3.set_ylim(bottom=df_x_bound['Price Total'].min()*ylim_buffer_frac_bot,
-                 top=df_x_bound['Price Total'].max()*ylim_buffer_frac_top)    
+    ax3.set_ylim(bottom=df_x_bound['Price Total'].min()/2*ylim_buffer_frac_bot,
+                 top=df_x_bound['Price Total'].max()/2*ylim_buffer_frac_top)    
     ax3.legend(loc='lower right')
+    # pdb.set_trace()
     ax3.set_facecolor('white')
 
     #WARNING since the axes are shared, this formatting should only need to be applied once

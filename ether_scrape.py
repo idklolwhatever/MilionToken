@@ -24,7 +24,7 @@ while True:
             html = urlopen(req).read() 
             soup = BeautifulSoup(html,'html.parser')
             #print(soup.prettify())
-
+            #pdb.set_trace()
             price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[12].text.split(' ')[0].split('$')[1])
             #print(price)
             #print('TEST1 '*10)
@@ -68,8 +68,8 @@ while True:
         if  urlopen(req_bsc).read():### Need to  have error pass here 
             html = urlopen(req_bsc).read() 
             soup = BeautifulSoup(html,'html.parser')
-            #pdb.set_trace()
-            price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[11].text.split(' ')[0].split('$')[1])
+            #
+            #price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[11].text.split(' ')[0].split('$')[1].replace('\n','').replace(',',''))
             #print('TEST2 '*10)
             #print(soup.body.find('div', attrs={'class': 'mr-3'}).prettify()    )
             #print('NEXT2\n')
@@ -80,8 +80,10 @@ while True:
             holders = float(re.findall(r'[0-9]+',x.replace(',',''))[0])
 
             #holders = float(soup.body.find('div', attrs={'class': 'mr-3'}).getText().split(' ')[0].split('\n')[1].replace(',',''))
-            market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
-
+            #pdb.set_trace()
+            #print(float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText()))
+            #market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().split('$')[1].split('\n')[0].replace(',',''))
+            market_cap = float(soup.body.find_all('span', attrs={'class':'d-block'})[-1].getText().replace('\n','').replace(',','').replace('$',''))
             # For BSC, supply is ETH supply locked
             # when you bridge you lock the tokens in aspecial bridge contract on ETH
             # Active tokens = (999,999-24,2554.072249

@@ -23,6 +23,8 @@ bsc_address = '0xbf05279f9bf1ce69bbfed670813b7e431142afa4'
 bsc_url_api = f"https://bscscan.com/token/{bsc_address}?apikey={bsc_address}"
 
 
+f'https://bscscan.com/getAddressTransactions/{bsc_address}?apiKey=freekey'
+
 
 #https://api.bscscan.com/api?module=stats&action=tokensupply&contractaddress=0xbf05279f9bf1ce69bbfed670813b7e431142afa4&apikey=33ZABD5NV1J7XJJGGZCX7M3H2XVG868BTM
 
@@ -39,7 +41,6 @@ while True:
         if  urlopen(req).read():### Need to  have error pass here 
             html = urlopen(req).read() 
             soup = BeautifulSoup(html,'html.parser')
-            
             data = json.loads(soup.get_text())
             print(json.dumps(data,indent=4))
             million_data = data['tokenInfo']
