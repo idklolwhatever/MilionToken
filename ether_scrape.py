@@ -22,7 +22,7 @@ while True:
     try:
         if  urlopen(req).read():### Need to  have error pass here 
             html = urlopen(req).read() 
-            soup = BeautifulSoup(html,'html.parser')
+            soup = BeautifulSoup(html,'html.parser') 
             #print(soup.prettify())
             #pdb.set_trace()
             price = float(soup.body.find_all('span', attrs={'class': 'd-block'})[12].text.split(' ')[0].split('$')[1])
@@ -109,11 +109,15 @@ while True:
         
         total_holders = df_bsc['Holders'].values+df_es['Holders'].values
         print(f'The current total number of holders is: {total_holders}')    
-    except urllib.error.URLError as e:
-        # Not an HTTP-specific error (e.g. connection refused)
-        # ...
-        print('URLError: {}'.format(e.reason))
+######################################################################################
+    # except urllib.error.URLError as e:
+    #     # Not an HTTP-specific error (e.g. connection refused)
+    #     # ...
+    #     print('URLError: {}'.format(e.reason))
+    #https://stackoverflow.com/questions/13783933/elegant-way-to-try-except-a-series-of-beautifulsoup-commands/13791779#13791779
+    except TypeError:
+        pass
     
-    for i in tqdm (range (30*1), desc="Waiting for new data", ascii=False, ncols=100):
+    for i in tqdm (range (60*2), desc="Waiting for new data", ascii=False, ncols=100):
         time.sleep(1)
     #time.sleep(60*2)# This will pause it every 5 minutes so as not to get kicked off server.
